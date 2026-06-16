@@ -23,3 +23,6 @@ class AlarmModel(BaseModel):
     severity: str = Field(..., example="CRITICAL", description="INFO, WARNING, CRITICAL")
     is_resolved: bool = Field(default=False)
     timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+class VolumeInputModel(BaseModel):
+    volume: float = Field(..., example=45.2, description="Desibel cinsinden ses seviyesi")

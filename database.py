@@ -18,6 +18,7 @@ else:
 client = AsyncIOMotorClient(MONGO_DETAILS)
 database = client[MONGO_DB_NAME]
 device_collection = database.get_collection("devices")
+telemetry_collection = database.get_collection("telemetries")
 
 async def add_device(device_data: dict) -> dict:
     """Veritabanına yeni cihaz ekler"""
@@ -54,3 +55,8 @@ async def delete_device_data(device_id: str) -> bool:
         await device_collection.delete_one({"device_id": device_id})
         return True
     return False
+
+async def add_telemetry(telemetry_data: dict) -> dict:
+    """Ses verisini zaman damgasıyla kaydeder"""
+    await telemetry_collection.insert_one(telemetry_data)
+    return telemetry_data
