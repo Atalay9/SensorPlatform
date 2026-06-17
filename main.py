@@ -1,11 +1,13 @@
 from fastapi import FastAPI, HTTPException, status
-from models import DeviceModel
+from datetime import datetime
+from models import DeviceModel, VolumeInputModel
 from database import (
     retrieve_device,
     add_device,
     retrieve_devices,
     update_device_data,
-    delete_device_data
+    delete_device_data,
+    add_telemetry
 )
 
 app = FastAPI(title="Sensor Platform API")
@@ -56,3 +58,22 @@ async def delete_device(device_id: str):
     if not success:
         raise HTTPException(status_code=404, detail="Device not found")
     return {"message": "Device deleted successfully"}
+
+
+@app.post("/devices/{device_id}/telemetry", status_code=status.HTTP_201_CREATED)
+async def post_telemetry(device_id: str, telemetry_in: VolumeInputModel):
+    # 1. Kontrol: Bu cihaz sistemde kayıtlı mı?
+    device = await retrieve_device(device_id)
+    if not device:
+        raise HTTPException(status_code=404, detail="Device not found. Register the device first.")
+
+    # 2. Veritabanına kaydedilecek dökümanı kurumsal standartta (zaman damgasıyla) hazırlıyoruz
+    telemetry_payload = {
+        "device_id": device_id,
+        "sensor_type": "sound_level",
+        "value": telemetry_in.volume,
+        "timestamp": datetime.utcnow()  # Tarihsel sorgular için kritik öneme sahip
+    }
+
+    await add_telemetry(telemetry_payload)
+    return {"message": "Telemetry saved successfully", "device_id": device_id}
