@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 from motor.motor_asyncio import AsyncIOMotorClient
 from dotenv import load_dotenv
 
@@ -60,3 +61,18 @@ async def add_telemetry(telemetry_data: dict) -> dict:
     """Ses verisini zaman damgasıyla kaydeder"""
     await telemetry_collection.insert_one(telemetry_data)
     return telemetry_data
+
+async def retrieve_telemetry_by_date(device_id: str, start_date: datetime, end_date: datetime) -> list:
+    """Belirli bir cihaza ait, iki tarih arasındaki tüm telemetri kayıtlarını getirir"""
+    telemetries = []
+    query = {
+        "device_id": device_id,
+        "timestamp": {
+            "$gte": start_date,
+            "$lte": end_date
+        }
+    }
+    async for telemetry in telemetry_collection.find(query):
+        telemetry.pop("_id", None)
+        telemetries.append(telemetry)
+    return telemetries
