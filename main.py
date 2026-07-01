@@ -7,7 +7,8 @@ from database import (
     retrieve_devices,
     update_device_data,
     delete_device_data,
-    add_telemetry
+    add_telemetry,
+    retrieve_telemetry_by_date
 )
 
 app = FastAPI(title="Sensor Platform API")
@@ -77,3 +78,18 @@ async def post_telemetry(device_id: str, telemetry_in: VolumeInputModel):
 
     await add_telemetry(telemetry_payload)
     return {"message": "Telemetry saved successfully", "device_id": device_id}
+
+
+@app.get("/devices/{device_id}/telemetry/", response_model=list)
+async def get_device_telemetry(device_id: str, start_date: datetime, end_date: datetime):
+    # 1. Kontrol: Cihaz sistemde var mı?
+    device = await retrieve_device(device_id)
+    if not device:
+        raise HTTPException(status_code=404, detail="Device not found")
+
+    # 2. Kontrol: Tarih sırası mantıklı mı?
+    if start_date > end_date:
+        raise HTTPException(status_code=400, detail="start_date cannot be greater than end_date")
+
+    # Doğrudan filtrelenmiş ham kayıt listesini dönüyoruz
+    return await retrieve_telemetry_by_date(device_id, start_date, end_date)
